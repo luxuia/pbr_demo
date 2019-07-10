@@ -159,7 +159,7 @@
 				float4 IndirectResult = float4(iblDiffuse * kdLast * Albedo + iblSpecular * surfaceReduction * FresnelLerp(F0, grazingTerm, nv), 1);		
 				*/
 
-				float4 result = float4(DirectLightResult +IndirectResult, 1);
+				float4 result = float4(DirectLightResult+IndirectResult, 1);
 				
 				return result;
             }

@@ -65,23 +65,24 @@
                 
                 //计算环境光
                 fixed3 ambient = UNITY_LIGHTMODEL_AMBIENT.xyz * texcol;
-				//return UNITY_LIGHTMODEL_AMBIENT*2;
 
-				fixed diff = max (0, dot (normal, lightdir));
-
-				fixed3 albedo =  _DiffColor * _LightColor0.rgb*diff;
-
-				fixed3 h = normalize(lightdir + viewdir);
-				fixed nh = max(0, dot(normal, h));
-
-				// *diff 
-				fixed3 spec = _SpecColor * pow(nh, _Specular*128) * diff;
-
+				/*
 				       // Completely per-pixel
         	fixed3 ambient_contrib = ShadeSH9 (half4(normal, 1.0));
         	ambient += max(half3(0, 0, 0), ambient_contrib);
+			*/
+				//return UNITY_LIGHTMODEL_AMBIENT*2;
 
-				return fixed4( ambient + albedo + spec, 1);
+				fixed diff = saturate(dot (normal, lightdir));
+
+				fixed3 albedo =  _DiffColor *diff;
+
+				fixed3 h = normalize(lightdir + viewdir);
+				fixed nh = saturate(dot(normal, h));
+
+				fixed3 spec = _SpecColor * pow(nh, _Specular*128);
+
+				return fixed4( ambient + (albedo + spec)* _LightColor0.rgb, 1);
 			}
 			ENDCG
 		}
