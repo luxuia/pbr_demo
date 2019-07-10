@@ -73,10 +73,13 @@
 
 				fixed3 h = normalize(lightdir + viewdir);
 				fixed nh = max(0, dot(normal, h));
-				return fixed4(h, 1);
 
 				// *diff 
 				fixed3 spec = _SpecColor * pow(nh, _Specular*128) * diff;
+
+				       // Completely per-pixel
+        	fixed3 ambient_contrib = ShadeSH9 (half4(normal, 1.0));
+        	ambient += max(half3(0, 0, 0), ambient_contrib);
 
 				return fixed4( ambient + albedo + spec, 1);
 			}

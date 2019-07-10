@@ -50,7 +50,7 @@ CGPROGRAM
 #define UNITY_PASS_FORWARDBASE
 #include "UnityCG.cginc"
 #include "Lighting.cginc"
-#include "CUSTOMUnityPBSLighting.cginc"
+#include "UnityPBSLighting.cginc"
 #include "AutoLight.cginc"
 
 #define INTERNAL_DATA

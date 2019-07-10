@@ -50,7 +50,7 @@ CGPROGRAM
 #define UNITY_PASS_FORWARDBASE
 #include "UnityCG.cginc"
 #include "Lighting.cginc"
-#include "CUSTOMUnityPBSLighting.cginc"
+#include "UnityPBSLighting.cginc"
 #include "AutoLight.cginc"
 
 #define INTERNAL_DATA
@@ -337,7 +337,7 @@ fixed4 frag_surf (v2f_surf IN) : SV_Target {
     giInput.boxMin[1] = unity_SpecCube1_BoxMin;
     giInput.probePosition[1] = unity_SpecCube1_ProbePosition;
   #endif
-  //LightingStandard_GI(o, giInput, gi);
+  LightingStandard_GI(o, giInput, gi);
 
   // realtime lighting: call lighting function
   c = PBRLighting (o, worldViewDir, gi);
