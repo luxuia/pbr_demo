@@ -9,7 +9,7 @@
 		_LUT("LUT", 2D) = "white" {}
 
 		[Toggle]_FACTOR_D("D", Int) = 0
-		//[Toggle]_FACTOR_V("V", Int) = 0
+		[Toggle]_FACTOR_V("V", Int) = 0
 		[Toggle]_FACTOR_G("G", Int) = 0
 		[Toggle]_FACTOR_F("F", Int) = 0
 
@@ -63,10 +63,10 @@
             float4 _MainTex_ST;
 			sampler2D _LUT;
 
-			#pragma multi_compile __ _ _FACTOR_D_ON _FACTOR_G_ON _FACTOR_V_ON _FACTOR_F_ON
-			#pragma multi_compile __ _ _DIR_SPECULAR_ON _DIR_DIFFUSE_ON _DIR_SUM_ON
+			#pragma shader_feature _FACTOR_D_ON _FACTOR_G_ON _FACTOR_V_ON _FACTOR_F_ON
+			#pragma shader_feature _DIR_SPECULAR_ON _DIR_DIFFUSE_ON
 
-			#pragma multi_compile __ _ _INDIR_SPECULAR_ON _INDIR_DIFFUSE_ON _INDIR_SPECULAR_ON _INDIR_DIFFUSE_ON
+			#pragma shader_feature _INDIR_SPECULAR_ON _INDIR_DIFFUSE_ON _INDIR_SPECULAR_ON _INDIR_DIFFUSE_ON
 
             v2f vert (appdata v)
             {
@@ -155,7 +155,7 @@
 					return fixed4(diffColor, 1);
 				#endif
 				float3 DirectLightResult = diffColor + specColor;
-				#ifdef _DIR_SUM_ON
+				#ifdef _DIR_SUM
 					return fixed4(DirectLightResult, 1);
 				#endif
 
