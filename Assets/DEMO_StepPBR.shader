@@ -147,7 +147,7 @@
 							float3 kd = (1 - F)*(1 - _Metallic);
 
 							//直接光照部分结果
-							float3 specColor = SpecularResult * lightColor * nl * FresnelTerm(1, lh) * UNITY_PI;
+							float3 specColor = SpecularResult * lightColor * nl * F * UNITY_PI;
 							#ifdef _DIR_SPECULAR_ON
 								return fixed4(specColor, 1);
 							#endif

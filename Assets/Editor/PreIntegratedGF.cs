@@ -6,7 +6,7 @@ using UnityEditor;
 
 public class PreIntegratedGF : MonoBehaviour {
 
-const int resolution = 64;
+const int resolution = 128;
 const int NumSamples = 16;
     static float saturate(float x)
 {
@@ -77,7 +77,7 @@ const int NumSamples = 16;
         float A = 0, B = 0;
     for (int i = 0; i < NumSamples; i++)
     {
-        Vector3 E = Hammersley(i, NumSamples);
+        Vector2 E = Hammersley(i, NumSamples);
         Vector3 H = ImportanceSampleGGX(E, Roughness);
         Vector3 L = 2 * Vector3.Dot(V,H) * H - V;
 
@@ -115,19 +115,20 @@ const int NumSamples = 16;
 		t2 = rand_32bit();
 
         
-        var file = File.OpenWrite("PreIntegratedGF.ppm");
-
-        string content = string.Format("P3\n{0} {1}\n{2}\n", resolution, resolution, 255);
+        var file = File.OpenWrite("PreIntegratedGF.png");
+        var texture = new Texture2D(resolution, resolution, TextureFormat.RGB24, false);
 
         for (int x = 0; x < resolution; x++)
 	    {
 	        for (int y = 0; y < resolution; y++)
 	        {
-	            Vector3 brdf = IntegrateBRDF(1 - 1.0f * x / (resolution - 1), 1.0f * y / (resolution - 1));
-                content += string.Format(" {0:D3} {1:D3} {2:D3}\n", Mathf.FloorToInt(brdf.x * 255), Mathf.FloorToInt(brdf.y * 255), 0);
+	            Vector3 brdf = IntegrateBRDF(1.0f * x / (resolution - 1), 1.0f * y / (resolution - 1));
+                texture.SetPixel(x, y, new Color(brdf.x, brdf.y, 0));
 	        }
 	    }
-        file.Write(System.Text.Encoding.Default.GetBytes(content), 0, content.Length);
+        texture.Apply();
+        var pngBytes = texture.EncodeToPNG();
+        file.Write(pngBytes, 0, pngBytes.Length);
         file.Flush();
         file.Close();
         file.Dispose();
