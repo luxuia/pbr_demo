@@ -32,14 +32,14 @@
 				"LightMode" = "ForwardBase"
 			}
             CGPROGRAM
-			
+
 
 			#pragma target 3.0
 
             #pragma vertex vert
             #pragma fragment frag
 
-			#include "UnityStandardBRDF.cginc" 
+			#include "UnityStandardBRDF.cginc"
 
             struct appdata
             {
@@ -135,8 +135,8 @@
 
 				//unity_ColorSpaceDielectricSpec.rgb这玩意大概是float3(0.04, 0.04, 0.04)，就是个经验值
 				float3 F0 = lerp(unity_ColorSpaceDielectricSpec.rgb, Albedo, _Metallic);
-				//float3 F = lerp(pow((1 - max(vh, 0)),5), 1, F0);//是hv不是nv
-				float3 F = F0 + (1 - F0) * exp2((-5.55473 * vh - 6.98316) * vh);
+				float3 F = lerp(pow((1 - max(vh, 0)),5), 1, F0);//是hv不是nv
+				//float3 F = F0 + (1 - F0) * exp2((-5.55473 * vh - 6.98316) * vh);
 				#ifdef _FACTOR_F_ON
 					return fixed4(F, 1);
 				#endif
@@ -144,10 +144,11 @@
 				float3 SpecularResult = (D * G * F * 0.25) / (nv * nl);
 
 				//漫反射系数
+                // 1-F项保证能量守恒，1-Metallic项表示 金属吸收折射光
 				float3 kd = (1 - F)*(1 - _Metallic);
 
 				//直接光照部分结果
-				float3 specColor = SpecularResult * lightColor * nl * F * UNITY_PI;
+				float3 specColor = SpecularResult * lightColor * nl * UNITY_PI;
 				#ifdef _DIR_SPECULAR_ON
 					return fixed4(specColor, 1);
 				#endif
@@ -159,7 +160,7 @@
 				#ifdef _DIR_SUM_ON
 					return fixed4(DirectLightResult, 1);
 				#endif
-			
+
 				//ibl部分
 				half3 ambient_contrib = ShadeSH9(float4(i.normal, 1));
 				/*
@@ -175,9 +176,9 @@
 				float3 reflectVec = reflect(-viewDir, i.normal);
 
 				half mip = mip_roughness * UNITY_SPECCUBE_LOD_STEPS;
-				half3 iblSpecular = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectVec, mip); //根据粗糙度生成lod级别对贴图进行三线性采样
+				half4 rgbm = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectVec, mip); //根据粗糙度生成lod级别对贴图进行三线性采样
 
-				//float3 iblSpecular = DecodeHDR(rgbm, unity_SpecCube0_HDR);
+				float3 iblSpecular = DecodeHDR(rgbm, unity_SpecCube0_HDR);
 
 				float2 envBDRF = tex2D(_LUT, float2(lerp(0, 0.99 ,nv), lerp(0, 0.99, roughness))).rg; // LUT采样
 
@@ -185,9 +186,11 @@
 				float kdLast = (1 - Flast) * (1 - _Metallic);
 
 				float3 iblDiffuseResult = iblDiffuse * kdLast * Albedo;
-				float3 iblSpecularResult = iblSpecular * (Flast * envBDRF.r + envBDRF.g);
+			
+				float3 iblSpecularResult = iblSpecular * (Flast* envBDRF.r + envBDRF.g);
 				float3 IndirectResult = iblDiffuseResult + iblSpecularResult;
-
+			//	return fixed4((Flast* envBDRF.r + envBDRF.g), 1);
+			//	return fixed4(iblSpecular, 1);
 				/*
 				float surfaceReduction = 1.0 / (roughness*roughness + 1.0); //Liner空间
 				//float surfaceReduction = 1.0 - 0.28*roughness*perceptualRoughness;  //Gamma空间
