@@ -175,17 +175,17 @@
 				float3 reflectVec = reflect(-viewDir, i.normal);
 
 				half mip = mip_roughness * UNITY_SPECCUBE_LOD_STEPS;
-				half iblSpecular = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectVec, mip); //根据粗糙度生成lod级别对贴图进行三线性采样
+				half3 iblSpecular = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectVec, mip); //根据粗糙度生成lod级别对贴图进行三线性采样
 
 				//float3 iblSpecular = DecodeHDR(rgbm, unity_SpecCube0_HDR);
 
 				float2 envBDRF = tex2D(_LUT, float2(lerp(0, 0.99 ,nv), lerp(0, 0.99, roughness))).rg; // LUT采样
 
-				//float3 Flast = fresnelSchlickRoughness(max(nv, 0.0), F0, roughness);
-				float kdLast = (1 - F) * (1 - _Metallic);
+				float3 Flast = fresnelSchlickRoughness(max(nv, 0.0), F0, roughness);
+				float kdLast = (1 - Flast) * (1 - _Metallic);
 
 				float3 iblDiffuseResult = iblDiffuse * kdLast * Albedo;
-				float3 iblSpecularResult = iblSpecular * (F * envBDRF.r + envBDRF.g);
+				float3 iblSpecularResult = iblSpecular * (Flast * envBDRF.r + envBDRF.g);
 				float3 IndirectResult = iblDiffuseResult + iblSpecularResult;
 
 				/*
