@@ -120,89 +120,89 @@
 					return fixed4(D, D, D, 1);
 				#endif
 
-					//几何遮蔽G 说白了就是高光
-					float kInDirectLight = pow(squareRoughness + 1, 2) / 8;
-					float kInIBL = pow(squareRoughness, 2) / 8;
-					float GLeft = nl / lerp(nl, 1, kInDirectLight);
-					float GRight = nv / lerp(nv, 1, kInDirectLight);
-					float G = GLeft * GRight;
+				//几何遮蔽G 说白了就是高光
+				float kInDirectLight = pow(squareRoughness + 1, 2) / 8;
+				float kInIBL = pow(squareRoughness, 2) / 8;
+				float GLeft = nl / lerp(nl, 1, kInDirectLight);
+				float GRight = nv / lerp(nv, 1, kInDirectLight);
+				float G = GLeft * GRight;
 
-					#ifdef _FACTOR_G_ON
-						return fixed4(G, G, G, 1);
-					#endif
+				#ifdef _FACTOR_G_ON
+					return fixed4(G, G, G, 1);
+				#endif
 
-						//菲涅尔F
+				//菲涅尔F
 
-						//unity_ColorSpaceDielectricSpec.rgb这玩意大概是float3(0.04, 0.04, 0.04)，就是个经验值
-						float3 F0 = lerp(unity_ColorSpaceDielectricSpec.rgb, Albedo, _Metallic);
-						//float3 F = lerp(pow((1 - max(vh, 0)),5), 1, F0);//是hv不是nv
-						float3 F = F0 + (1 - F0) * exp2((-5.55473 * vh - 6.98316) * vh);
-						#ifdef _FACTOR_F_ON
-							return fixed4(F, 1);
-						#endif
-							//镜面反射结果
-							float3 SpecularResult = (D * G * F * 0.25) / (nv * nl);
+				//unity_ColorSpaceDielectricSpec.rgb这玩意大概是float3(0.04, 0.04, 0.04)，就是个经验值
+				float3 F0 = lerp(unity_ColorSpaceDielectricSpec.rgb, Albedo, _Metallic);
+				//float3 F = lerp(pow((1 - max(vh, 0)),5), 1, F0);//是hv不是nv
+				float3 F = F0 + (1 - F0) * exp2((-5.55473 * vh - 6.98316) * vh);
+				#ifdef _FACTOR_F_ON
+					return fixed4(F, 1);
+				#endif
+				//镜面反射结果
+				float3 SpecularResult = (D * G * F * 0.25) / (nv * nl);
 
-							//漫反射系数
-							float3 kd = (1 - F)*(1 - _Metallic);
+				//漫反射系数
+				float3 kd = (1 - F)*(1 - _Metallic);
 
-							//直接光照部分结果
-							float3 specColor = SpecularResult * lightColor * nl * F * UNITY_PI;
-							#ifdef _DIR_SPECULAR_ON
-								return fixed4(specColor, 1);
-							#endif
-							float3 diffColor = kd * Albedo * lightColor * nl;
-							#ifdef _DIR_DIFFUSE_ON
-								return fixed4(diffColor, 1);
-							#endif
-							float3 DirectLightResult = diffColor + specColor;
-							#ifdef _DIR_SUM_ON
-								return fixed4(DirectLightResult, 1);
-							#endif
+				//直接光照部分结果
+				float3 specColor = SpecularResult * lightColor * nl * F * UNITY_PI;
+				#ifdef _DIR_SPECULAR_ON
+					return fixed4(specColor, 1);
+				#endif
+				float3 diffColor = kd * Albedo * lightColor * nl;
+				#ifdef _DIR_DIFFUSE_ON
+					return fixed4(diffColor, 1);
+				#endif
+				float3 DirectLightResult = diffColor + specColor;
+				#ifdef _DIR_SUM_ON
+					return fixed4(DirectLightResult, 1);
+				#endif
 			
-								//ibl部分
-								half3 ambient_contrib = ShadeSH9(float4(i.normal, 1));
-								/*
-								half3 ambient_contrib = 0.0;
-								ambient_contrib.r = dot(unity_SHAr, half4(i.normal, 1.0));
-								ambient_contrib.g = dot(unity_SHAg, half4(i.normal, 1.0));
-								ambient_contrib.b = dot(unity_SHAb, half4(i.normal, 1.0));
-								*/
+				//ibl部分
+				half3 ambient_contrib = ShadeSH9(float4(i.normal, 1));
+				/*
+				half3 ambient_contrib = 0.0;
+				ambient_contrib.r = dot(unity_SHAr, half4(i.normal, 1.0));
+				ambient_contrib.g = dot(unity_SHAg, half4(i.normal, 1.0));
+				ambient_contrib.b = dot(unity_SHAb, half4(i.normal, 1.0));
+				*/
 
-								float3 iblDiffuse = max(half3(0, 0, 0), ambient + ambient_contrib);
+				float3 iblDiffuse = max(half3(0, 0, 0), ambient + ambient_contrib);
 
-								float mip_roughness = perceptualRoughness * (1.7 - 0.7 * perceptualRoughness);
-								float3 reflectVec = reflect(-viewDir, i.normal);
+				float mip_roughness = perceptualRoughness * (1.7 - 0.7 * perceptualRoughness);
+				float3 reflectVec = reflect(-viewDir, i.normal);
 
-								half mip = mip_roughness * UNITY_SPECCUBE_LOD_STEPS;
-								half iblSpecular = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectVec, mip); //根据粗糙度生成lod级别对贴图进行三线性采样
+				half mip = mip_roughness * UNITY_SPECCUBE_LOD_STEPS;
+				half iblSpecular = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectVec, mip); //根据粗糙度生成lod级别对贴图进行三线性采样
 
-								//float3 iblSpecular = DecodeHDR(rgbm, unity_SpecCube0_HDR);
+				//float3 iblSpecular = DecodeHDR(rgbm, unity_SpecCube0_HDR);
 
-								float2 envBDRF = tex2D(_LUT, float2(lerp(0, 0.99 ,nv), lerp(0, 0.99, roughness))).rg; // LUT采样
+				float2 envBDRF = tex2D(_LUT, float2(lerp(0, 0.99 ,nv), lerp(0, 0.99, roughness))).rg; // LUT采样
 
-								float3 Flast = fresnelSchlickRoughness(max(nv, 0.0), F0, roughness);
-								float kdLast = (1 - Flast) * (1 - _Metallic);
+				//float3 Flast = fresnelSchlickRoughness(max(nv, 0.0), F0, roughness);
+				float kdLast = (1 - F) * (1 - _Metallic);
 
-								float3 iblDiffuseResult = iblDiffuse * kdLast * Albedo;
-								float3 iblSpecularResult = iblSpecular * (Flast * envBDRF.r + envBDRF.g);
-								float3 IndirectResult = iblDiffuseResult + iblSpecularResult;
+				float3 iblDiffuseResult = iblDiffuse * kdLast * Albedo;
+				float3 iblSpecularResult = iblSpecular * (F * envBDRF.r + envBDRF.g);
+				float3 IndirectResult = iblDiffuseResult + iblSpecularResult;
 
-								/*
-								float surfaceReduction = 1.0 / (roughness*roughness + 1.0); //Liner空间
-								//float surfaceReduction = 1.0 - 0.28*roughness*perceptualRoughness;  //Gamma空间
-								float oneMinusReflectivity = 1 - max(max(SpecularResult.r, SpecularResult.g), SpecularResult.b);
-								float grazingTerm = saturate(_Smoothness + (1 - oneMinusReflectivity));
-								float4 IndirectResult = float4(iblDiffuse * kdLast * Albedo + iblSpecular * surfaceReduction * FresnelLerp(F0, grazingTerm, nv), 1);
-								*/
-								#ifdef _INDIR_DIFFUSE_ON
-								return fixed4(iblDiffuseResult, 1);
-								#endif
-								#ifdef _INDIR_SPECULAR_ON
-								return fixed4(iblSpecularResult, 1);
-								#endif
+				/*
+				float surfaceReduction = 1.0 / (roughness*roughness + 1.0); //Liner空间
+				//float surfaceReduction = 1.0 - 0.28*roughness*perceptualRoughness;  //Gamma空间
+				float oneMinusReflectivity = 1 - max(max(SpecularResult.r, SpecularResult.g), SpecularResult.b);
+				float grazingTerm = saturate(_Smoothness + (1 - oneMinusReflectivity));
+				float4 IndirectResult = float4(iblDiffuse * kdLast * Albedo + iblSpecular * surfaceReduction * FresnelLerp(F0, grazingTerm, nv), 1);
+				*/
+				#ifdef _INDIR_DIFFUSE_ON
+				return fixed4(iblDiffuseResult, 1);
+				#endif
+				#ifdef _INDIR_SPECULAR_ON
+				return fixed4(iblSpecularResult, 1);
+				#endif
 
-								float4 result = float4(DirectLightResult + IndirectResult, 1);
+				float4 result = float4(DirectLightResult + IndirectResult, 1);
 				return result;
             }
 
